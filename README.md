@@ -14,6 +14,7 @@ An advanced, AI-powered tennis biomechanics analysis platform that leverages Com
 - **Direction & Trajectory Estimation**: Estimates shot direction (Cross-court, Down-the-line, Inside-out) based on hip-shoulder alignment and racquet-arm swing trajectory.
 - **Tactical Shot Recommendations**: Provides actionable coaching recommendations tailored to player posture and shot execution.
 - **Interactive Web Dashboard**: Modern, glassmorphic UI built with Vanilla JS, HTML5, and CSS featuring live video playback, annotated overlays, and Chart.js metrics.
+- **Convenient NPM Workflow**: Launch backend and frontend effortlessly using familiar `npm run dev` and `npm start` commands.
 
 ---
 
@@ -23,6 +24,7 @@ An advanced, AI-powered tennis biomechanics analysis platform that leverages Com
 ├── backend/
 │   ├── app.py                     # FastAPI application server and endpoints
 │   ├── model.py                   # PyTorch neural network architecture & kinematics logic
+│   ├── package.json               # Backend npm runner scripts
 │   ├── requirements.txt           # Python dependencies
 │   ├── test_api.py                # API integration test suite
 │   ├── test_bio.py                # Biomechanics calculation tests
@@ -31,12 +33,17 @@ An advanced, AI-powered tennis biomechanics analysis platform that leverages Com
 ├── frontend/
 │   ├── index.html                 # Analysis dashboard web interface
 │   ├── style.css                  # Custom styling and glassmorphism design system
-│   └── app.js                     # Frontend state management & video rendering
+│   ├── app.js                     # Frontend state management & video rendering
+│   └── package.json               # Frontend npm runner scripts
+├── scripts/
+│   ├── start-backend.sh           # Backend launcher (auto-detects .venv)
+│   └── start-frontend.sh          # Frontend static HTTP server launcher
 ├── demo/                          # Sample clips and demonstration assets
 ├── sample videos/                 # Practice videos of pro and collegiate players
 ├── outputs/                       # Destination for generated annotated video analyses
 ├── improved-tennis-pose-extraction-research.ipynb  # Pose extraction & ML experimentation
 ├── model_random_split.pt          # Pretrained PyTorch model weights
+├── package.json                   # Root npm configuration (dev & start scripts)
 └── README.md
 ```
 
@@ -46,11 +53,14 @@ An advanced, AI-powered tennis biomechanics analysis platform that leverages Com
 
 ### Prerequisites
 
-- Python 3.9+
-- pip
+- **Node.js & npm** (v16+)
+- **Python** (3.9 to 3.11 recommended)
+- **pip**
 - Modern web browser (Chrome, Safari, Firefox, Edge)
 
-### 1. Installation
+---
+
+### 1. Installation & Environment Setup
 
 Clone the repository and set up a Python virtual environment:
 
@@ -62,33 +72,48 @@ cd tennis-player-analysis
 python3 -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Install backend dependencies
+# Install backend Python dependencies
 pip install -r backend/requirements.txt
 ```
 
-### 2. Run the Backend Server
+---
 
-You can launch the backend using `npm` directly from the project root (or inside `backend/`):
+### 2. Running the Application (Recommended: NPM)
 
+You can launch both services using standard `npm` commands directly from the project root:
+
+#### Start Backend Server
 ```bash
 npm run dev
 ```
+> 🎾 **Backend runs on:** [http://localhost:8000](http://localhost:8000)  
+> 📖 **Interactive Swagger API Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)  
+> *Note: The launcher script automatically detects and uses `.venv/bin/python` without requiring manual virtualenv activation.*
 
-*(Alternatively with Python directly: `source .venv/bin/activate && cd backend && python -m uvicorn app:app --host 0.0.0.0 --port 8000 --reload`)*
-
-The API will be available at `http://localhost:8000` with interactive Swagger docs at `http://localhost:8000/docs`.
-
-### 3. Launch the Frontend Dashboard
-
-You can start the frontend dashboard using `npm` from the root (or inside `frontend/`):
-
+#### Start Frontend Dashboard
+Open a new terminal tab and run:
 ```bash
 npm start
 ```
+> 🌐 **Frontend runs on:** [http://localhost:3000](http://localhost:3000)
 
-*(Alternatively: `python3 -m http.server 3000 --directory frontend`)*
+*(You can also run `npm run dev` from inside `backend/` and `npm start` from inside `frontend/`.)*
 
-Visit `http://localhost:3000` in your browser to interact with the dashboard.
+---
+
+### 3. Alternative: Running with Python Directly
+
+If you prefer running without `npm`:
+
+```bash
+# Terminal 1 — Backend:
+source .venv/bin/activate
+cd backend
+python -m uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+
+# Terminal 2 — Frontend:
+python3 -m http.server 3000 --directory frontend
+```
 
 ---
 
