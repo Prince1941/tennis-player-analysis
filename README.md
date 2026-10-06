@@ -68,25 +68,27 @@ pip install -r backend/requirements.txt
 
 ### 2. Run the Backend Server
 
-Start the FastAPI application with Uvicorn:
+You can launch the backend using `npm` directly from the project root (or inside `backend/`):
 
 ```bash
-cd backend
-python -m uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+npm run dev
 ```
+
+*(Alternatively with Python directly: `source .venv/bin/activate && cd backend && python -m uvicorn app:app --host 0.0.0.0 --port 8000 --reload`)*
 
 The API will be available at `http://localhost:8000` with interactive Swagger docs at `http://localhost:8000/docs`.
 
-### 3. Launch the Frontend
+### 3. Launch the Frontend Dashboard
 
-Open `frontend/index.html` in your browser, or serve it using Python's static server or any HTTP server:
+You can start the frontend dashboard using `npm` from the root (or inside `frontend/`):
 
 ```bash
-# From the project root
-python3 -m http.server 3000 --directory frontend
+npm start
 ```
 
-Visit `http://localhost:3000` to interact with the dashboard.
+*(Alternatively: `python3 -m http.server 3000 --directory frontend`)*
+
+Visit `http://localhost:3000` in your browser to interact with the dashboard.
 
 ---
 

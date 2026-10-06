@@ -1,0 +1,19 @@
+{
+  "name": "courtvision-ai",
+  "version": "1.0.0",
+  "description": "CourtVision AI — Tennis Pose & Stroke Analyzer",
+  "scripts": {
+    "dev": "bash ./scripts/start-backend.sh",
+    "backend": "bash ./scripts/start-backend.sh",
+    "start": "bash ./scripts/start-frontend.sh",
+    "frontend": "bash ./scripts/start-frontend.sh"
+  },
+  "keywords": [
+    "tennis",
+    "biomechanics",
+    "computer-vision",
+    "fastapi"
+  ],
+  "author": "Prince Kumar",
+  "license": "MIT"
+}

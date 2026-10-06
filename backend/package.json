@@ -1,0 +1,8 @@
+{
+  "name": "courtvision-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "bash ../scripts/start-backend.sh",
+    "start": "bash ../scripts/start-backend.sh"
+  }
+}
