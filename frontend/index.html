@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CourtVision AI — Tennis Pose & Stroke Analyzer</title>
+    <meta name="description" content="Advanced tennis biomechanics analysis dashboard powered by deep learning and computer vision.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Style -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Glowing background blobs -->
+        <div class="glow-blob blob-1"></div>
+        <div class="glow-blob blob-2"></div>
+        <div class="glow-blob blob-3"></div>
+
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <span class="logo-icon">🎾</span>
+                <h1>CourtVision<span>AI</span></h1>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-tab="analyze" id="nav-analyze-btn">
+                    <span class="nav-icon">📊</span>
+                    <span>Analyze Stroke</span>
+                </button>
+                <button class="nav-item" data-tab="help" id="nav-help-btn">
+                    <span class="nav-icon">ℹ️</span>
+                    <span>About & Help</span>
+                </button>
+            </nav>
+
+            <div class="server-status-card">
+                <div class="status-indicator-container">
+                    <span class="status-dot pulse" id="status-dot"></span>
+                    <span class="status-text" id="status-text">Connecting to Server...</span>
+                </div>
+                <div class="status-details">
+                    <span id="model-mode">Model: Loading</span>
+                    <span id="device-info" style="display:block; font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">Device: Initializing</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="main-header">
+                <div class="header-title">
+                    <h2 id="page-title">Biomechanics Dashboard</h2>
+                    <p id="page-subtitle">Sequential shot-by-shot detection, PyTorch Transformer classification, and dynamic joint angles.</p>
+                </div>
+                <div class="header-profile">
+                    <div class="profile-info">
+                        <span class="profile-name">Coach Mode</span>
+                        <span class="profile-role">ATP Multi-Stroke Analyst</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Tab: Analyze -->
+            <section class="tab-content active" id="tab-analyze">
+                <div class="dashboard-grid">
+                    <!-- Column 1: Upload and Visualization -->
+                    <div class="grid-col main-panel">
+                        <!-- Upload Card -->
+                        <div class="glass-card upload-card" id="drop-zone">
+                            <input type="file" id="file-input" accept="image/*,video/*" style="display: none;">
+                            <div class="upload-content">
+                                <div class="upload-icon-wrapper">
+                                    <span class="upload-icon">📤</span>
+                                </div>
+                                <h3>Drag & Drop tennis video or image</h3>
+                                <p>Supports MP4, MOV, JPG, PNG (Max 150MB)</p>
+                                <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem;">
+                                    <button class="btn btn-primary" id="select-file-btn">Browse Files</button>
+                                    <button type="button" class="btn btn-outline" id="load-coric-video-btn" style="border: 1px solid var(--primary-color); color: var(--primary-color); font-weight: 600;">🎾 Run Borna Coric Rally Video</button>
+                                    <button type="button" class="btn btn-outline" id="load-sample-video-btn">⚡ Dominic Thiem Practice</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Processing State -->
+                        <div class="glass-card processing-card hidden" id="processing-card">
+                            <div class="spinner-container">
+                                <div class="spinner"></div>
+                            </div>
+                            <h3 id="processing-title">Analyzing Biomechanics...</h3>
+                            <p id="processing-message">Extracting poses and running Transformer inference.</p>
+                            <div class="progress-bar-container" id="upload-progress-container">
+                                <div class="progress-bar-fill" id="upload-progress-bar"></div>
+                            </div>
+                            <p class="progress-status-text" id="upload-progress-text">Preparing upload...</p>
+                        </div>
+
+                        <!-- Visualizer Card (Hidden initially, shown after analysis) -->
+                        <div class="glass-card visualizer-card hidden" id="visualizer-card">
+                            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <h3 id="visualizer-title" style="margin: 0;">Pose Playback</h3>
+                                    <div class="view-mode-group hidden" id="view-mode-group" style="display: flex; background: rgba(255,255,255,0.06); padding: 2px; border-radius: 6px;">
+                                        <button type="button" class="btn-mode active" id="btn-mode-canvas" style="padding: 4px 10px; font-size: 0.75rem; border: none; border-radius: 4px; background: var(--primary-color); color: #080c14; cursor: pointer; font-weight: 600;">Interactive Overlay</button>
+                                        <button type="button" class="btn-mode" id="btn-mode-annotated" style="padding: 4px 10px; font-size: 0.75rem; border: none; border-radius: 4px; background: transparent; color: var(--text-secondary); cursor: pointer; font-weight: 600;">Annotated Video (HUD)</button>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <a id="download-video-btn" class="btn btn-sm btn-outline hidden" title="Download Processed Video" style="padding: 4px 8px; font-size: 0.8rem; text-decoration: none;" download>⬇ Download MP4</a>
+                                    <div class="playback-controls hidden" id="playback-controls">
+                                        <button class="btn btn-icon" id="play-pause-btn">▶</button>
+                                        <input type="range" id="timeline-scrubber" min="0" max="29" value="0">
+                                        <span class="frame-counter" id="frame-counter">0 / 29</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="media-container" style="position: relative;">
+                                <!-- Image view -->
+                                <img id="annotated-image-view" class="media-view hidden" alt="Annotated Pose">
+                                
+                                <!-- Video view 1: Interactive Canvas Overlay -->
+                                <div class="video-wrapper hidden" id="video-wrapper">
+                                    <video id="source-video-view" class="media-view" playsinline></video>
+                                    <canvas id="skeleton-canvas" class="overlay-canvas"></canvas>
+                                </div>
+
+                                <!-- Video view 2: Pre-rendered Annotated Video with HUD -->
+                                <video id="annotated-video-view" class="media-view hidden" controls playsinline></video>
+                            </div>
+
+                            <!-- Video Playback Feedback Status Bar -->
+                            <div class="video-feedback-bar hidden" id="video-feedback-bar" aria-live="polite" aria-label="Video Playback Status">
+                                <div class="feedback-stat">
+                                    <span class="stat-label">Time</span>
+                                    <span class="stat-val" id="playback-time-display">00:00 / 00:00</span>
+                                </div>
+                                <div class="feedback-stat">
+                                    <span class="stat-label">Active Shot</span>
+                                    <span class="stat-val" id="playback-impact-frame" style="color: var(--primary-color); font-weight: 600;">Shot 1</span>
+                                </div>
+                                <div class="feedback-stat">
+                                    <span class="stat-label">Buffering</span>
+                                    <span class="stat-val" id="playback-buffering-status"><span class="status-badge ready">Ready</span></span>
+                                </div>
+                                <div class="feedback-stat">
+                                    <span class="stat-label">Speed</span>
+                                    <select class="speed-selector" id="playback-speed-selector" aria-label="Playback Speed">
+                                        <option value="0.25">0.25x Slow-Mo</option>
+                                        <option value="0.5">0.5x</option>
+                                        <option value="1.0" selected>1.0x</option>
+                                        <option value="1.5">1.5x</option>
+                                        <option value="2.0">2.0x</option>
+                                    </select>
+                                </div>
+                                <div class="feedback-stat">
+                                    <button class="btn btn-sm btn-outline" id="reupload-btn" style="padding: 2px 8px; font-size: 0.75rem;">Upload Another</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Results & Metrics -->
+                    <div class="grid-col side-panel">
+                        <!-- Shot Navigation Card -->
+                        <div class="glass-card shot-navigator-card hidden" id="shot-navigator-card" style="margin-bottom: 1rem; padding: 0.85rem 1rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <button class="btn btn-sm btn-icon" id="prev-shot-btn" title="Previous Shot" style="width: 28px; height: 28px; border-radius: 4px;">◀</button>
+                                    <span id="current-shot-badge" style="font-weight: 700; color: var(--primary-color); font-size: 0.95rem;">Shot 1 of 1</span>
+                                    <button class="btn btn-sm btn-icon" id="next-shot-btn" title="Next Shot" style="width: 28px; height: 28px; border-radius: 4px;">▶</button>
+                                </div>
+                                <div class="shot-timestamp-tag" id="shot-timestamp-tag" style="font-size: 0.8rem; color: var(--text-secondary); background: rgba(255,255,255,0.06); padding: 3px 8px; border-radius: 4px;">
+                                    ⏱ 00:00 - 00:00
+                                </div>
+                            </div>
+                            <div class="shot-pills-bar" id="shot-pills-bar" style="display: flex; gap: 6px; overflow-x: auto; margin-top: 0.75rem; padding-bottom: 2px;">
+                                <!-- Dynamic shot pills -->
+                            </div>
+                        </div>
+
+                        <!-- AI Insights (Inference Results) -->
+                        <div class="glass-card insights-card" id="insights-card">
+                            <h3 id="insights-card-title">Stroke Analysis</h3>
+                            <div class="empty-state" id="insights-empty-state">
+                                <span class="empty-icon">📈</span>
+                                <p>Inference results will appear here once a video or image is analyzed.</p>
+                            </div>
+                            
+                            <div class="insights-content hidden" id="insights-content">
+                                <!-- Primary Metrics -->
+                                <div class="metric-row">
+                                    <div class="metric-box">
+                                        <span class="metric-label">Stroke Type</span>
+                                        <span class="metric-value" id="val-stroke">Forehand</span>
+                                        <div class="confidence-bar-container">
+                                            <div class="confidence-bar" id="conf-stroke-bar"></div>
+                                        </div>
+                                        <span class="metric-conf" id="val-stroke-conf">98% Conf</span>
+                                        <div class="prob-mini-list" id="prob-stroke-mini"></div>
+                                    </div>
+                                    <div class="metric-box">
+                                        <span class="metric-label">Direction</span>
+                                        <span class="metric-value" id="val-direction">Cross Court</span>
+                                        <div class="confidence-bar-container">
+                                            <div class="confidence-bar" id="conf-direction-bar"></div>
+                                        </div>
+                                        <span class="metric-conf" id="val-direction-conf">94% Conf</span>
+                                        <div class="prob-mini-list" id="prob-direction-mini"></div>
+                                    </div>
+                                    <div class="metric-box">
+                                        <span class="metric-label">Posture Quality</span>
+                                        <span class="metric-value" id="val-posture">Good</span>
+                                        <div class="confidence-bar-container">
+                                            <div class="confidence-bar" id="conf-posture-bar"></div>
+                                        </div>
+                                        <span class="metric-conf" id="val-posture-conf">99% Conf</span>
+                                        <div class="prob-mini-list" id="prob-posture-mini"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Recommendation -->
+                                <div class="recommendation-box" style="margin-top: 1rem;">
+                                    <div class="rec-header">
+                                        <span class="rec-icon">💡</span>
+                                        <h4 id="rec-title">Optimal Shot Execution</h4>
+                                    </div>
+                                    <div id="rec-text" style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-top: 0.5rem;">Excellent execution. Your posture was clean during stroke contact.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Biomechanical Angles -->
+                        <div class="glass-card angles-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h3 id="angles-card-title">Biomechanical Joint Angles</h3>
+                                <span id="angles-shot-tag" style="font-size: 0.75rem; color: var(--primary-color); font-weight: 600;"></span>
+                            </div>
+                            <div class="empty-state" id="angles-empty-state">
+                                <span class="empty-icon">📐</span>
+                                <p>Derived angular and stance calculations will be plotted dynamically per shot.</p>
+                            </div>
+                            <div class="chart-container hidden" id="chart-container">
+                                <canvas id="metrics-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Help -->
+            <section class="tab-content" id="tab-help">
+                <div class="help-grid">
+                    <div class="glass-card">
+                        <h3>Understanding Shot-by-Shot Analysis</h3>
+                        <p>CourtVision AI continuously processes the entire video to detect each individual tennis stroke in a rally.</p>
+                        
+                        <h4>Features Computed</h4>
+                        <ul>
+                            <li><strong>Sequential Shot Detection:</strong> Kinetic wrist and arm velocity curves identify each impact peak throughout the rally.</li>
+                            <li><strong>Dynamic Biomechanical Joint Angles:</strong> Joint angles are calculated across video frames and independently aggregated for every detected shot.</li>
+                            <li><strong>Trunk Rotation Diff:</strong> Measures hip-shoulder separation in degrees for each stroke.</li>
+                            <li><strong>Trunk Lean:</strong> Computes forward/lateral tilt angle relative to the center of gravity in radians.</li>
+                            <li><strong>Stance Width:</strong> Represents lateral ankle distance relative to hip width.</li>
+                        </ul>
+                    </div>
+
+                    <div class="glass-card">
+                        <h3>Model Architecture</h3>
+                        <p>The neural network is a <strong>TennisTransformer</strong> classifier consisting of:</p>
+                        <ul>
+                            <li><strong>Input Dimension:</strong> 50 features per frame (39 3D MediaPipe world metric coordinates + 11 derived biomechanical variables).</li>
+                            <li><strong>Sequence Length:</strong> 30 temporal frames normalized and centered around each stroke velocity peak.</li>
+                            <li><strong>Heads:</strong> Multitask head predicting:
+                                <ul>
+                                    <li><strong>Direction:</strong> Center, Cross Court, Down The Line</li>
+                                    <li><strong>Stroke Type:</strong> Backhand, Forehand</li>
+                                    <li><strong>Posture Quality:</strong> Bad, Good</li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <p>Weights file: <code>model_random_split.pt</code>.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
